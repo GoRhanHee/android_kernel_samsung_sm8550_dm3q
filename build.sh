@@ -156,9 +156,6 @@ ${ANDROID_BUILD_TOP}/out/vendor/qcom/opensource/securemsm-kernel/Module.symvers"
         ../vendor/qcom/opensource/eva-kernel \
         ../vendor/qcom/opensource/wlan/platform \
         ../vendor/qcom/opensource/bt-kernel \
-        ../vendor/nxp/opensource/driver \
-        ../vendor/st/opensource/driver \
-        ../vendor/st/opensource/eSE-driver \
         ../vendor/qcom/opensource/wlan/qcacld-3.0 \
     "  
 
