@@ -135,13 +135,32 @@ ${ANDROID_BUILD_TOP}/out/vendor/qcom/opensource/securemsm-kernel/Module.symvers"
 
     export MODNAME="audio_dlkm"
     export KBUILD_EXT_MODULES="../vendor/qcom/opensource/mm-drivers/msm_ext_display \
-../vendor/qcom/opensource/mm-drivers/sync_fence \
-../vendor/qcom/opensource/mm-drivers/hw_fence \
-../vendor/qcom/opensource/mmrm-driver \
-../vendor/qcom/opensource/securemsm-kernel \
-../vendor/qcom/opensource/display-drivers/msm \
-../vendor/qcom/opensource/audio-kernel \
-../vendor/qcom/opensource/camera-kernel"
+        ../vendor/qcom/opensource/mm-drivers/sync_fence \
+        ../vendor/qcom/opensource/mm-drivers/hw_fence \
+        ../vendor/qcom/opensource/mmrm-driver \
+        ../vendor/qcom/opensource/securemsm-kernel \
+        ../vendor/qcom/opensource/display-drivers/msm \
+        ../vendor/qcom/opensource/audio-kernel \
+        ../vendor/qcom/opensource/camera-kernel \
+        ../vendor/qcom/opensource/video-driver \
+        ../vendor/qcom/opensource/graphics-kernel \
+        ../vendor/qcom/opensource/dataipa/drivers/platform/msm \
+        ../vendor/qcom/opensource/datarmnet/core \
+        ../vendor/qcom/opensource/datarmnet-ext/aps \
+        ../vendor/qcom/opensource/datarmnet-ext/offload \
+        ../vendor/qcom/opensource/datarmnet-ext/shs \
+        ../vendor/qcom/opensource/datarmnet-ext/sch \
+        ../vendor/qcom/opensource/datarmnet-ext/perf \
+        ../vendor/qcom/opensource/datarmnet-ext/perf_tether \
+        ../vendor/qcom/opensource/datarmnet-ext/wlan \
+        ../vendor/qcom/opensource/eva-kernel \
+        ../vendor/qcom/opensource/wlan/platform \
+        ../vendor/qcom/opensource/bt-kernel \
+        ../vendor/nxp/opensource/driver \
+        ../vendor/st/opensource/driver \
+        ../vendor/st/opensource/eSE-driver \
+        ../vendor/qcom/opensource/wlan/qcacld-3.0 \
+    "  
 
     echo "[full] BUILD_TARGET=${BUILD_TARGET}"
     echo "[full] OUT_DIR=${OUT_DIR}"
