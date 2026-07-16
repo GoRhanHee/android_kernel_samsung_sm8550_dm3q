@@ -1,7 +1,63 @@
+# Main build outputs
 /out/
-/.common-merge-work/
-/.dm3q-superproject-work/
+/dist/
+/kernel_platform/out/
+/kernel_platform/dist/
 
+# Downloaded Samsung/Android toolchains
+/kernel_platform/prebuilts/
+/toolchain.tar.xz
+/sm8550-toolchain*.tar.xz
+
+# Kleaf/Bazel outputs and caches
+/.cache/
+/kernel_platform/.cache/
+/bazel-*
+/kernel_platform/bazel-*
+
+# Kernel and external-module build products
+*.o
+*.o.*
+*.ko
+*.ko.*
+*.a
+*.cmd
+*.mod
+*.mod.c
+*.symtypes
+Module.symvers
+modules.order
+modules.builtin
+modules.builtin.modinfo
+
+# Device-tree and packaged build products
+*.dtb
+*.dtbo
+*.dt.yaml
+*.img
+*.cpio
+*.cpio.gz
+*.cpio.lz4
+
+# Generated metadata and temporary files
+compile_commands.json
 *.log
 *.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*.swp
+*.swo
 *~
+
+# Python/editor/OS caches
+__pycache__/
+*.py[cod]
+.DS_Store
+.idea/
+.vscode/
+
+# Local integration worktrees used during source preparation
+/.common-merge-work/
+/.dm3q-superproject-work/
