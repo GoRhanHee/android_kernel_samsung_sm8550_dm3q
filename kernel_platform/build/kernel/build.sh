@@ -710,6 +710,13 @@ if [ "${SKIP_DEFCONFIG}" != "1" ] ; then
   fi
 fi
 
+# Custom Defconfig
+CUSTOM_DEFCONFIG="${ANDROID_BUILD_TOP:-${ROOT_DIR}/..}/custom_defconfigs/gorhanhee_defconfig"
+echo "========================================================"
+echo " Merging custom defconfig with .config"
+(cd "${OUT_DIR}" && "${MERGE_CONFIG:-${ROOT_DIR}/${KERNEL_DIR}/scripts/kconfig/merge_config.sh}" -m .config "${CUSTOM_DEFCONFIG}")
+(cd "${OUT_DIR}" && make O="${OUT_DIR}" ${TOOL_ARGS} "${MAKE_ARGS[@]}" olddefconfig)
+
 if [ "${KASAN}" = "sw_tags" ]; then
   echo "====================================================="
   echo "Enabling KASAN"
