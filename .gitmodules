@@ -1,0 +1,4 @@
+[submodule "kernel_platform/common"]
+	path = kernel_platform/common
+	url = https://github.com/GoRhanHee/android_kernel_samsung_sm8550_common.git
+	branch = android13-5.15-sm8550

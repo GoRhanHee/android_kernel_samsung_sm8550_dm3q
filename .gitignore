@@ -1,0 +1,7 @@
+/out/
+/.common-merge-work/
+/.dm3q-superproject-work/
+
+*.log
+*.tmp
+*~

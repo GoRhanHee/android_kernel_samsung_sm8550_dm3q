@@ -1,0 +1,10 @@
+/dts-v1/;
+/plugin/;
+#include "kalamap-rb5-gen2.dtsi"
+
+/ {
+	model = "Qualcomm Technologies, Inc. Kalamap RB5 gen2 v13 for CamSS";
+	compatible = "qcom,kalamap-iot", "qcom,kalamap", "qcom,iot";
+	qcom,msm-id = <603 0x20000>;
+	qcom,board-id = <0x1051f 0x2>;
+};
