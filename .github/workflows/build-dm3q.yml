@@ -1,0 +1,77 @@
+name: Build dm3q kernel
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Kernel build mode
+        required: true
+        default: full
+        type: choice
+        options:
+          - full
+          - common
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dm3q-kernel-${{ github.ref }}-${{ inputs.mode }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: dm3q ${{ inputs.mode }} build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            bc \
+            bison \
+            build-essential \
+            cpio \
+            flex \
+            git \
+            libelf-dev \
+            libncurses5 \
+            libssl-dev \
+            libtinfo5 \
+            lz4 \
+            python3 \
+            rsync \
+            unzip \
+            wget \
+            xz-utils \
+            zstd
+
+      - name: Restore Samsung toolchain
+        uses: actions/cache@v4
+        with:
+          path: kernel_platform/prebuilts
+          key: samsung-sm8550-toolchain-r450784e-v1
+
+      - name: Build dm3q kernel
+        env:
+          JOBS: ${{ runner.arch == 'X64' && '4' || '2' }}
+        run: ./build.sh "${{ inputs.mode }}"
+
+      - name: Upload kernel artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dm3q-${{ inputs.mode }}-${{ github.sha }}
+          path: |
+            out/common-dist/
+            out/msm-kalama-kalama-gki/dist/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
