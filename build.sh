@@ -9,6 +9,7 @@ readonly KERNEL_PLATFORM="${SOURCE_DIR}/kernel_platform"
 readonly TOOLCHAIN_URL="${TOOLCHAIN_URL:-https://github.com/GoRhanHee/samsung_sm8550_toolchain/releases/download/toolchain/toolchain.tar.xz}"
 readonly CLANG_BIN="${KERNEL_PLATFORM}/prebuilts/clang/host/linux-x86/clang-r450784e/bin/clang"
 readonly JOBS="${JOBS:-$(nproc)}"
+export LTO="${LTO:-thin}"
 
 usage() {
     cat <<EOF
@@ -31,6 +32,7 @@ Environment overrides:
   COMMON_DIST_DIR  Common kernel artifact directory
   FULL_OUT_DIR     Full-build output directory
   TOOLCHAIN_URL    Samsung toolchain archive URL
+  LTO              LTO mode: none, thin or full (default: ${LTO})
 EOF
 }
 
