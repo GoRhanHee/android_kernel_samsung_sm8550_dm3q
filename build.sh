@@ -43,6 +43,15 @@ require_command() {
     command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"
 }
 
+update_submodules() {
+    [[ -f "${SOURCE_DIR}/.gitmodules" ]] || return
+
+    require_command git
+    echo "[submodule] Syncing and updating submodules"
+    git -C "${SOURCE_DIR}" submodule sync --recursive
+    git -C "${SOURCE_DIR}" submodule update --init --recursive
+}
+
 prepare_toolchain() {
     if [[ -x "${CLANG_BIN}" ]]; then
         echo "[toolchain] Using ${CLANG_BIN}"
@@ -133,6 +142,7 @@ main() {
     case "${mode}" in
         common)
             [[ $# -eq 1 ]] || die "common mode does not accept a BUILD_TARGET"
+            update_submodules
             [[ -d "${KERNEL_PLATFORM}/common" ]] || \
                 die "kernel source not found: ${KERNEL_PLATFORM}"
             prepare_toolchain
@@ -140,6 +150,7 @@ main() {
             ;;
         full)
             [[ $# -eq 1 ]] || die "full mode is fixed to dm3q_kor_singlex"
+            update_submodules
             [[ -d "${KERNEL_PLATFORM}/common" ]] || \
                 die "kernel source not found: ${KERNEL_PLATFORM}"
             prepare_toolchain
