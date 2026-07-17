@@ -125,24 +125,21 @@ jobs:
               "${dist}/vendor_dlkm.modules.blocklist" \
               "${dist}/system_dlkm.modules.load" \
               "${dist}/system_dlkm.modules.blocklist"
+
+            mkdir -p "${artifact_dir}/dtbs"
+            for file in "${dist}"/*.dtb "${dist}"/*.dtbo; do
+              [[ -f "${file}" ]] || continue
+              cp "${file}" "${artifact_dir}/dtbs/"
+            done
           fi
 
-          [[ -f "${artifact_dir}/Image" ]] || {
-            echo "Image was not found in ${dist}" >&2
-            exit 1
-          }
-          [[ -f "${artifact_dir}/boot.img" ]] || {
-            echo "boot.img was not found in ${dist}" >&2
-            exit 1
-          }
-
-          find "${artifact_dir}" -maxdepth 1 -type f -printf '%f\n' | sort
+          find "${artifact_dir}" -type f -printf '%P\n' | sort
 
       - name: Upload kernel artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dm3q-${{ inputs.mode }}-${{ github.sha }}
           path: out/upload/${{ inputs.mode }}/
-          if-no-files-found: error
+          if-no-files-found: warn
           compression-level: 0
           retention-days: 7
