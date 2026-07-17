@@ -71,13 +71,78 @@ jobs:
           JOBS: ${{ runner.arch == 'X64' && '4' || '2' }}
         run: ./build.sh "${{ inputs.mode }}"
 
+      - name: Collect kernel artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mode="${{ inputs.mode }}"
+          artifact_dir="out/upload/${mode}"
+          mkdir -p "${artifact_dir}"
+
+          copy_if_present() {
+            local file
+            for file in "$@"; do
+              if [[ -f "${file}" ]]; then
+                cp "${file}" "${artifact_dir}/"
+              fi
+            done
+          }
+
+          if [[ "${mode}" == "common" ]]; then
+            dist="out/common-dist"
+            copy_if_present \
+              "${dist}/Image" \
+              "${dist}/Image.gz" \
+              "${dist}/Image.lz4" \
+              "${dist}/boot.img" \
+              "${dist}/system_dlkm.img" \
+              "${dist}/gki-info.txt" \
+              "${dist}/System.map" \
+              "${dist}/vmlinux.symvers" \
+              "${dist}/modules.builtin" \
+              "${dist}/modules.builtin.modinfo" \
+              "${dist}/zram.ko" \
+              "${dist}/zsmalloc.ko" \
+              "${dist}/abi.report.short"
+          else
+            dist="out/msm-kalama-kalama-gki/dist"
+            copy_if_present \
+              "${dist}/Image" \
+              "${dist}/Image.gz" \
+              "${dist}/Image.lz4" \
+              "${dist}/boot.img" \
+              "${dist}/vendor_boot.img" \
+              "${dist}/vendor_dlkm.img" \
+              "${dist}/init_boot.img" \
+              "${dist}/dtb.img" \
+              "${dist}/dtbo.img" \
+              "${dist}/system_dlkm.img" \
+              "${dist}/System.map" \
+              "${dist}/Module.symvers" \
+              "${dist}/vmlinux.symvers" \
+              "${dist}/vendor_dlkm.modules.load" \
+              "${dist}/vendor_dlkm.modules.blocklist" \
+              "${dist}/system_dlkm.modules.load" \
+              "${dist}/system_dlkm.modules.blocklist"
+          fi
+
+          [[ -f "${artifact_dir}/Image" ]] || {
+            echo "Image was not found in ${dist}" >&2
+            exit 1
+          }
+          [[ -f "${artifact_dir}/boot.img" ]] || {
+            echo "boot.img was not found in ${dist}" >&2
+            exit 1
+          }
+
+          find "${artifact_dir}" -maxdepth 1 -type f -printf '%f\n' | sort
+
       - name: Upload kernel artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dm3q-${{ inputs.mode }}-${{ github.sha }}
-          path: |
-            out/common-dist/
-            out/msm-kalama-kalama-gki/dist/
+          path: out/upload/${{ inputs.mode }}/
           if-no-files-found: error
           compression-level: 0
           retention-days: 7
