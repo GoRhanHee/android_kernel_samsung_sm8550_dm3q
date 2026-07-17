@@ -175,7 +175,7 @@ build_full() {
         ../vendor/qcom/opensource/eva-kernel \
         ../vendor/qcom/opensource/wlan/platform \
         ../vendor/qcom/opensource/bt-kernel \
-        ../vendor/qcom/opensource/wlan/qcacld-3.0 \
+        ../vendor/qcom/opensource/wlan/qcacld-3.0/.kiwi_v2 \
     "  
 
     echo "[full] BUILD_TARGET=${BUILD_TARGET}"
