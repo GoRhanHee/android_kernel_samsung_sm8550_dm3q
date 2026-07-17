@@ -13,11 +13,11 @@ M ?= $(shell pwd)
 
 ifeq ($(WLAN_ROOT),)
 KBUILD_OPTIONS += \
-    WLAN_ROOT=$(KERNEL_SRC)/$(M) \
-    WLAN_PLATFORM_ROOT=$(KERNEL_SRC)/$(M)/../platform \
+    WLAN_ROOT=$(KERNEL_SRC)/$(M)/../ \
+    WLAN_PLATFORM_ROOT=$(WLAN_ROOT)/../platform \
     WLAN_COMMON_ROOT=cmn \
-    WLAN_COMMON_INC=$(KERNEL_SRC)/$(M)/cmn \
-    WLAN_FW_API=$(KERNEL_SRC)/$(M)/../fw-api \
+    WLAN_COMMON_INC=$(WLAN_ROOT)/$(WLAN_COMMON_ROOT) \
+    WLAN_FW_API=$(WLAN_ROOT)/../fw-api \
     CONFIG_QCA_CLD_WLAN=m \
     CONFIG_CNSS_OUT_OF_TREE=y \
     CONFIG_CNSS_KIWI_V2=y \
