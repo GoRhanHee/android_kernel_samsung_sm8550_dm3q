@@ -54,6 +54,19 @@ update_submodules() {
     git -C "${SOURCE_DIR}" submodule update --init --recursive
 }
 
+import_kernelsu_next() {
+    require_command curl
+    require_command bash
+
+    echo "[KernelSU-Next] Importing dev branch"
+    (
+        cd "${KERNEL_PLATFORM}/common"
+        curl -LSs \
+            "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | \
+            bash -s dev
+    )
+}
+
 prepare_toolchain() {
     if [[ -x "${CLANG_BIN}" ]]; then
         echo "[toolchain] Using ${CLANG_BIN}"
@@ -150,6 +163,7 @@ main() {
             update_submodules
             [[ -d "${KERNEL_PLATFORM}/common" ]] || \
                 die "kernel source not found: ${KERNEL_PLATFORM}"
+            import_kernelsu_next
             prepare_toolchain
             build_common
             ;;
@@ -158,6 +172,7 @@ main() {
             update_submodules
             [[ -d "${KERNEL_PLATFORM}/common" ]] || \
                 die "kernel source not found: ${KERNEL_PLATFORM}"
+            import_kernelsu_next
             prepare_toolchain
             build_full
             ;;
