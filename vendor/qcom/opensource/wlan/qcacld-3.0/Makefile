@@ -16,11 +16,7 @@ LOCAL_DEV_NAME := $(patsubst .%,%,\
 	$(lastword $(strip $(subst /, ,$(M)))))
 
 KBUILD_OPTIONS += \
-    WLAN_ROOT=$(KERNEL_SRC)/$(M)/../ \
-    WLAN_PLATFORM_ROOT=$(WLAN_ROOT)/../platform \
-    WLAN_COMMON_ROOT=cmn \
-    WLAN_COMMON_INC=$(WLAN_ROOT)/$(WLAN_COMMON_ROOT) \
-    WLAN_FW_API=$(WLAN_ROOT)/../fw-api \
+    WLAN_ROOT=$(KERNEL_SRC)/$(M) \
     CONFIG_QCA_CLD_WLAN=m \
     CONFIG_CNSS_OUT_OF_TREE=y \
     CONFIG_CNSS_KIWI_V2=y \
@@ -42,7 +38,7 @@ KBUILD_OPTIONS += \
     WLAN_CTRL_NAME=wlan
 endif
 
-KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS=$(M)/../platform/Module.symvers
+# KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS=$(M)/../platform/Module.symvers
 KBUILD_OPTIONS += $(KBUILD_EXTRA) # Extra config if any
 
 
