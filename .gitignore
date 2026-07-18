@@ -6,6 +6,13 @@
 
 # Downloaded Samsung/Android toolchains
 /kernel_platform/prebuilts/
+/prebuilts/LKM_Tools/
+/prebuilts/vendor_boot_unpack/
+/prebuilts/vendor_dlkm_unpack/
+.stock_vendor_boot/
+.stock_vendor_dlkm/
+.stock_vendor_boot.tar
+.stock_vendor_dlkm.zip
 /toolchain.tar.xz
 /sm8550-toolchain*.tar.xz
 

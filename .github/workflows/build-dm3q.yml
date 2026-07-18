@@ -60,6 +60,12 @@ jobs:
             xz-utils \
             zstd
 
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - name: Restore Samsung toolchain
         uses: actions/cache@v4
         with:
@@ -130,6 +136,15 @@ jobs:
             for file in "${dist}"/*.dtb "${dist}"/*.dtbo; do
               [[ -f "${file}" ]] || continue
               cp "${file}" "${artifact_dir}/dtbs/"
+            done
+
+            packaged="out/msm-kalama-kalama-gki/packaged"
+            mkdir -p "${artifact_dir}/packaged"
+            for file in "${packaged}/boot.img" \
+                        "${packaged}/vendor_boot.img" \
+                        "${packaged}/vendor_dlkm.img"; do
+              [[ -f "${file}" ]] || continue
+              cp "${file}" "${artifact_dir}/packaged/"
             done
           fi
 

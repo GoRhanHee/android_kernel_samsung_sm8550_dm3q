@@ -190,6 +190,180 @@ build_full() {
     echo "[full] Artifacts: ${OUT_DIR}/dist"
 }
 
+require_packaging_command() {
+    require_command "$1"
+}
+
+run_privileged() {
+    if (( EUID == 0 )); then
+        "$@"
+    else
+        sudo "$@"
+    fi
+}
+
+prepare_packaging_tools() {
+    local prebuilts_dir="${SOURCE_DIR}/prebuilts"
+
+    require_packaging_command git
+    require_packaging_command wget
+    require_packaging_command tar
+    require_packaging_command lz4
+    require_packaging_command unzip
+
+    rm -rf \
+        "${prebuilts_dir}/LKM_Tools" \
+        "${prebuilts_dir}/vendor_boot_unpack" \
+        "${prebuilts_dir}/vendor_dlkm_unpack"
+    mkdir -p "${prebuilts_dir}"
+
+    git clone --depth=1 \
+        https://github.com/ravindu644/LKM_Tools.git \
+        "${prebuilts_dir}/LKM_Tools"
+    git clone --depth=1 \
+        https://github.com/cfig/Android_boot_image_editor.git \
+        "${prebuilts_dir}/vendor_boot_unpack"
+    git clone --depth=1 \
+        https://github.com/ravindu644/Android_Image_Tools.git \
+        "${prebuilts_dir}/vendor_dlkm_unpack"
+}
+
+write_module_metadata() {
+    local modules_dir="$1"
+    local metadata_dir="$2"
+    local modules_dep="${modules_dir}/modules.dep"
+    local modules_load="${modules_dir}/modules.load"
+
+    [[ -f "${modules_dep}" ]] || die "modules.dep not found: ${modules_dep}"
+    [[ -f "${modules_load}" ]] || die "modules.load not found: ${modules_load}"
+
+    mkdir -p "${metadata_dir}"
+    bash "${SOURCE_DIR}/prebuilts/LKM_Tools/01.module_dep.sh" \
+        "${modules_dep}" "${metadata_dir}"
+    cp "${modules_load}" "${metadata_dir}/modules.load"
+}
+
+unpack_vendor_boot() {
+    local vboot_url="https://github.com/GoRhanHee/Firmware_Samsung/releases/download/S918NKSS8FZF1_KOO_OKR/S918NKSS8FZF1_kernel.tar"
+    local vboot_tar="${SOURCE_DIR}/.stock_vendor_boot.tar"
+    local extract_dir="${SOURCE_DIR}/.stock_vendor_boot"
+    local editor_dir="${SOURCE_DIR}/prebuilts/vendor_boot_unpack"
+    local vendor_boot_lz4
+    local modules_dir
+
+    wget -q --show-progress \
+        -O "${vboot_tar}" "${vboot_url}"
+    rm -rf "${extract_dir}"
+    mkdir -p "${extract_dir}"
+    tar -xf "${vboot_tar}" -C "${extract_dir}"
+
+    vendor_boot_lz4="$({ find "${extract_dir}" -type f -name 'vendor_boot.img.lz4' -print -quit; })"
+    [[ -n "${vendor_boot_lz4}" ]] || die "vendor_boot.img.lz4 not found"
+
+    lz4 -d -f \
+        "${vendor_boot_lz4}" \
+        "${SOURCE_DIR}/vendor_boot.stock.img"
+
+    (
+        cd "${editor_dir}"
+        cp "${SOURCE_DIR}/vendor_boot.stock.img" vendor_boot.img
+        ./gradlew unpack
+    )
+
+    modules_dir="${editor_dir}/build/unzip_boot/root.1/lib/modules"
+    write_module_metadata \
+        "${modules_dir}" \
+        "${SOURCE_DIR}/prebuilts/LKM_Tools/vendor_boot"
+}
+
+unpack_vendor_dlkm() {
+    local vdlkm_url="https://github.com/GoRhanHee/Firmware_Samsung/releases/download/S918NKSS8FZF1_KOO_OKR/S918NKSS8FZF1_vendor_dlkm.zip"
+    local vdlkm_zip="${SOURCE_DIR}/.stock_vendor_dlkm.zip"
+    local extract_dir="${SOURCE_DIR}/.stock_vendor_dlkm"
+    local image_tools_dir="${SOURCE_DIR}/prebuilts/vendor_dlkm_unpack"
+    local vdlkm_img
+    local modules_dir
+    local config_file="${image_tools_dir}/CONFIGS/vendor_dlkm_unpack.conf"
+
+    wget -q --show-progress \
+        -O "${vdlkm_zip}" "${vdlkm_url}"
+    rm -rf "${extract_dir}"
+    mkdir -p "${extract_dir}"
+    unzip -q -o "${vdlkm_zip}" -d "${extract_dir}"
+
+    vdlkm_img="$({ find "${extract_dir}" -type f -name 'vendor_dlkm.img' -print -quit; })"
+    [[ -n "${vdlkm_img}" ]] || die "vendor_dlkm.img not found in vendor_dlkm archive"
+
+    mkdir -p "${image_tools_dir}/INPUT_IMAGES" "${image_tools_dir}/CONFIGS"
+    cp "${vdlkm_img}" \
+        "${image_tools_dir}/INPUT_IMAGES/vendor_dlkm.img"
+    printf '%s\n' \
+        'ACTION=unpack' \
+        'INPUT_IMAGE=vendor_dlkm.img' \
+        'EXTRACT_DIR=extracted_vendor_dlkm' \
+        > "${config_file}"
+
+    (
+        cd "${image_tools_dir}"
+        run_privileged ./android_image_tools.sh \
+            --conf="${config_file}" --quiet
+    )
+    if (( EUID != 0 )); then
+        sudo chown -R "$(id -u):$(id -g)" "${image_tools_dir}"
+    fi
+
+    modules_dir="${image_tools_dir}/EXTRACTED_IMAGES/extracted_vendor_dlkm/lib/modules"
+    write_module_metadata \
+        "${modules_dir}" \
+        "${SOURCE_DIR}/prebuilts/LKM_Tools/vendor_dlkm"
+}
+
+build_vendor_boot() {
+    SCRIPT_DIR="${SCRIPT_DIR}" \
+        DIST_DIR="${DIST_DIR}" \
+        OUT_DIR="${OUT_DIR}" \
+        "${SCRIPT_DIR}/prebuilts/build_vendor_boot.sh"
+}
+
+build_vendor_dlkm() {
+    SCRIPT_DIR="${SCRIPT_DIR}" \
+        DIST_DIR="${DIST_DIR}" \
+        OUT_DIR="${OUT_DIR}" \
+        "${SCRIPT_DIR}/prebuilts/build_vendor_dlkm.sh"
+}
+
+collect_packaged_images() {
+    local package_dir="${OUT_DIR}/packaged"
+    local boot_image="${DIST_DIR}/boot.img"
+
+    [[ -f "${boot_image}" ]] || die "built boot.img not found: ${boot_image}"
+    [[ -f "${SOURCE_DIR}/vendor_boot.img" ]] || die "rebuilt vendor_boot.img not found"
+    [[ -f "${SOURCE_DIR}/vendor_dlkm.img" ]] || die "rebuilt vendor_dlkm.img not found"
+
+    mkdir -p "${package_dir}"
+    cp "${boot_image}" "${package_dir}/boot.img"
+    cp "${SOURCE_DIR}/vendor_boot.img" "${package_dir}/vendor_boot.img"
+    cp "${SOURCE_DIR}/vendor_dlkm.img" "${package_dir}/vendor_dlkm.img"
+    cp "${SOURCE_DIR}/vendor_boot.img" "${DIST_DIR}/vendor_boot.img"
+    cp "${SOURCE_DIR}/vendor_dlkm.img" "${DIST_DIR}/vendor_dlkm.img"
+}
+
+cleanup_packaging_workspace() {
+    rm -rf \
+        "${SOURCE_DIR}/prebuilts/LKM_Tools" \
+        "${SOURCE_DIR}/prebuilts/vendor_boot_unpack" \
+        "${SOURCE_DIR}/prebuilts/vendor_dlkm_unpack" \
+        "${SOURCE_DIR}/.stock_vendor_boot" \
+        "${SOURCE_DIR}/.stock_vendor_dlkm"
+    rm -f \
+        "${SOURCE_DIR}/.stock_vendor_boot.tar" \
+        "${SOURCE_DIR}/.stock_vendor_dlkm.zip" \
+        "${SOURCE_DIR}/vendor_boot.stock.img" \
+        "${SOURCE_DIR}/vendor_dlkm.stock.img" \
+        "${SOURCE_DIR}/vendor_boot.img" \
+        "${SOURCE_DIR}/vendor_dlkm.img"
+}
+
 main() {
     local mode="${1:-}"
     case "${mode}" in
@@ -210,6 +384,13 @@ main() {
             import_kernelsu_next
             prepare_toolchain
             build_full
+            prepare_packaging_tools
+            unpack_vendor_boot
+            unpack_vendor_dlkm
+            build_vendor_boot
+            build_vendor_dlkm
+            collect_packaged_images
+            cleanup_packaging_workspace
             ;;
         -h|--help|help)
             usage
