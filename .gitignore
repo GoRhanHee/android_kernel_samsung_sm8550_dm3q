@@ -3,6 +3,8 @@
 /dist/
 /kernel_platform/out/
 /kernel_platform/dist/
+/device/
+/exports.txt
 
 # Downloaded Samsung/Android toolchains
 /kernel_platform/prebuilts/

@@ -46,6 +46,7 @@ jobs:
             bison \
             build-essential \
             cpio \
+            erofs-utils \
             flex \
             git \
             libelf-dev \
