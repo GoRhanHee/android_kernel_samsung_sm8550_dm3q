@@ -17,6 +17,7 @@ LOCAL_DEV_NAME := $(patsubst .%,%,\
 
 KBUILD_OPTIONS += \
     WLAN_ROOT=$(KERNEL_SRC)/$(M) \
+    WLAN_PLATFORM_INC=$(KERNEL_SRC)/$(M)/../platform/inc \
     CONFIG_QCA_CLD_WLAN=m \
     CONFIG_CNSS_OUT_OF_TREE=y \
     CONFIG_CNSS_KIWI_V2=y \

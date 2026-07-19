@@ -1003,7 +1003,7 @@ if [[ -z "${SKIP_EXT_MODULES}" ]] && [[ -n "${EXT_MODULES}" ]]; then
     # and .ko) files will be stored in ${OUT_DIR}/${EXT_MOD_REL}. If we
     # instead set M to an absolute path, then object (i.e. .o and .ko) files
     # are stored in the module source directory which is not what we want.
-    EXT_MOD_REL=$(rel_path ${ROOT_DIR}/${EXT_MOD} ${KERNEL_DIR})
+    EXT_MOD_REL=$(rel_path2 ${ROOT_DIR}/${EXT_MOD} ${KERNEL_DIR})
     # The output directory must exist before we invoke make. Otherwise, the
     # build system behaves horribly wrong.
     mkdir -p ${OUT_DIR}/${EXT_MOD_REL}

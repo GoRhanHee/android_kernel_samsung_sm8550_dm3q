@@ -134,7 +134,7 @@ build_full() {
         ${ANDROID_BUILD_TOP}/out/vendor/qcom/opensource/securemsm-kernel/Module.symvers \
 		${ANDROID_BUILD_TOP}/out/vendor/qcom/opensource/graphics-kernel/Module.symvers \
 		${ANDROID_BUILD_TOP}/out/vendor/qcom/opensource/datarmnet/core/Module.symvers \
-		${ANDROID_BUILD_TOP}/out/vendor/qcom/opensource/wlan/qcacld-3.0/Module.symvers \
+		${ANDROID_BUILD_TOP}/out/vendor/qcom/opensource/wlan/qcacld-3.0/.kiwi_v2/Module.symvers \
 		${ANDROID_BUILD_TOP}/out/vendor/qcom/opensource/wlan/platform/Module.symvers \
 		${ANDROID_BUILD_TOP}/out/vendor/qcom/opensource/camera-kernel/Module.symvers \
 		${ANDROID_BUILD_TOP}/out/vendor/qcom/opensource/eva-kernel/Module.symvers \
@@ -186,6 +186,11 @@ build_full() {
         RECOMPILE_KERNEL=1 \
             ./kernel_platform/build/android/prepare_vendor.sh sec "${TARGET_PRODUCT}"
     )
+
+    if [[ -f "${DIST_DIR}/kiwi_v2.ko" ]]; then
+        cp "${DIST_DIR}/kiwi_v2.ko" \
+            "${DIST_DIR}/qca_cld3_kiwi_v2.ko"
+    fi
 
     echo "[full] Artifacts: ${OUT_DIR}/dist"
 }
