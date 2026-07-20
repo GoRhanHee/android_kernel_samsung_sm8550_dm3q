@@ -114,13 +114,11 @@ jobs:
               "${dist}/abi.report.short"
           else
             dist="out/msm-kalama-kalama-gki/dist"
+            packaged="out/msm-kalama-kalama-gki/packaged"
             copy_if_present \
               "${dist}/Image" \
               "${dist}/Image.gz" \
               "${dist}/Image.lz4" \
-              "${dist}/boot.img" \
-              "${dist}/vendor_boot.img" \
-              "${dist}/vendor_dlkm.img" \
               "${dist}/init_boot.img" \
               "${dist}/dtb.img" \
               "${dist}/dtbo.img" \
@@ -139,13 +137,18 @@ jobs:
               cp "${file}" "${artifact_dir}/dtbs/"
             done
 
-            packaged="out/msm-kalama-kalama-gki/packaged"
-            mkdir -p "${artifact_dir}/packaged"
-            for file in "${packaged}/boot.img" \
-                        "${packaged}/vendor_boot.img" \
-                        "${packaged}/vendor_dlkm.img"; do
-              [[ -f "${file}" ]] || continue
-              cp "${file}" "${artifact_dir}/packaged/"
+            declare -A final_images=(
+              [boot.img]="${dist}/boot.img"
+              [vendor_boot.img]="${packaged}/vendor_boot.img"
+              [vendor_dlkm.img]="${packaged}/vendor_dlkm.img"
+            )
+            for image in boot.img vendor_boot.img vendor_dlkm.img; do
+              source="${final_images[${image}]}"
+              if [[ ! -f "${source}" ]]; then
+                echo "::error::Required final image not found: ${source}"
+                exit 1
+              fi
+              cp "${source}" "${artifact_dir}/${image}"
             done
           fi
 
