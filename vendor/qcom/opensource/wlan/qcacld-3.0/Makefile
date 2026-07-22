@@ -12,12 +12,17 @@ KERNEL_SRC ?= /lib/modules/$(shell uname -r)/build
 M ?= $(shell pwd)
 
 ifeq ($(WLAN_ROOT),)
+LOCAL_SRC_NAME := $(lastword $(strip $(subst /, ,$(M))))
 LOCAL_DEV_NAME := $(patsubst .%,%,\
-	$(lastword $(strip $(subst /, ,$(M)))))
+	$(LOCAL_SRC_NAME))
+WLAN_KBUILD_LINK := .wlan-qcacld
+WLAN_KBUILD_ROOT := $(WLAN_KBUILD_LINK)/$(LOCAL_SRC_NAME)
+WLAN_KBUILD_SOURCE_LINK_PATH := $(KERNEL_SRC)/$(WLAN_KBUILD_LINK)
+WLAN_KBUILD_OUTPUT_LINK_PATH := $(if $(O),$(O),$(KERNEL_SRC))/$(WLAN_KBUILD_LINK)
 
 KBUILD_OPTIONS += \
-    WLAN_ROOT=$(KERNEL_SRC)/$(M) \
-    WLAN_PLATFORM_INC=$(KERNEL_SRC)/$(M)/../platform/inc \
+    WLAN_ROOT=$(WLAN_KBUILD_ROOT) \
+    WLAN_PLATFORM_INC=$(WLAN_KBUILD_ROOT)/../platform/inc \
     CONFIG_QCA_CLD_WLAN=m \
     CONFIG_CNSS_OUT_OF_TREE=y \
     CONFIG_CNSS_KIWI_V2=y \
@@ -42,12 +47,19 @@ endif
 # KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS=$(M)/../platform/Module.symvers
 KBUILD_OPTIONS += $(KBUILD_EXTRA) # Extra config if any
 
+ifeq ($(KERNELRELEASE),)
+.DEFAULT_GOAL := all
+.PHONY: prepare_wlan_root
+prepare_wlan_root:
+	@ln -sfn "$(CURDIR)" "$(WLAN_KBUILD_SOURCE_LINK_PATH)"
+	@ln -sfn "$(CURDIR)" "$(WLAN_KBUILD_OUTPUT_LINK_PATH)"
 
-all:
+all: prepare_wlan_root
 	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS)
 
-modules_install:
+modules_install: prepare_wlan_root
 	$(MAKE) INSTALL_MOD_STRIP=1 M=$(M) -C $(KERNEL_SRC) modules_install
 
-clean:
+clean: prepare_wlan_root
 	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean $(KBUILD_OPTIONS)
+endif
