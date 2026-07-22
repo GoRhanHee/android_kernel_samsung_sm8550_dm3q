@@ -42,24 +42,56 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y \
+            android-sdk-libsparse-utils \
+            attr \
+            autoconf \
+            automake \
             bc \
             bison \
             build-essential \
             cpio \
+            e2fsprogs \
             erofs-utils \
+            f2fs-tools \
             flex \
+            fuse2fs \
+            fuse3 \
             git \
             libelf-dev \
+            libfuse3-dev \
+            liblz4-dev \
             libncurses5 \
             libssl-dev \
             libtinfo5 \
+            libtool \
             lz4 \
+            pkg-config \
+            pv \
             python3 \
             rsync \
             unzip \
+            uuid-dev \
             wget \
             xz-utils \
+            zlib1g-dev \
             zstd
+
+          if ! command -v erofsfuse >/dev/null; then
+            erofs_dir="${RUNNER_TEMP}/erofs-utils"
+            git init "${erofs_dir}"
+            git -C "${erofs_dir}" remote add origin https://github.com/erofs/erofs-utils.git
+            git -C "${erofs_dir}" fetch --depth=1 origin 94f5a27f7b3878208e074038dec3f5c33b5fc3ba
+            git -C "${erofs_dir}" checkout --detach FETCH_HEAD
+            pushd "${erofs_dir}"
+            ./autogen.sh
+            ./configure --enable-fuse
+            make -j2
+            sudo make install
+            popd
+          fi
+
+          command -v mkfs.erofs
+          command -v erofsfuse
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
