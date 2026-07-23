@@ -31,6 +31,7 @@ Environment overrides:
   COMMON_OUT_DIR   Common kernel object directory
   COMMON_DIST_DIR  Common kernel artifact directory
   FULL_OUT_DIR     Full-build output directory
+  FLASHABLE_ZIP    Recovery ZIP output path
   TOOLCHAIN_URL    Samsung toolchain archive URL
   LTO              LTO mode: none, thin or full (default: ${LTO})
 EOF
@@ -217,6 +218,7 @@ prepare_packaging_tools() {
     require_packaging_command tar
     require_packaging_command lz4
     require_packaging_command unzip
+    require_packaging_command zip
 
     rm -rf \
         "${prebuilts_dir}/LKM_Tools" \
@@ -347,6 +349,7 @@ build_vendor_dlkm() {
 collect_packaged_images() {
     local package_dir="${OUT_DIR}/packaged"
     local boot_image="${DIST_DIR}/boot.img"
+    local flashable_zip="${FLASHABLE_ZIP:-${package_dir}/dm3q-kernel-recovery-flashable.zip}"
 
     [[ -f "${boot_image}" ]] || die "built boot.img not found: ${boot_image}"
     [[ -f "${SOURCE_DIR}/vendor_boot.img" ]] || die "rebuilt vendor_boot.img not found"
@@ -358,6 +361,10 @@ collect_packaged_images() {
     cp "${SOURCE_DIR}/vendor_dlkm.img" "${package_dir}/vendor_dlkm.img"
     cp "${SOURCE_DIR}/vendor_boot.img" "${DIST_DIR}/vendor_boot.img"
     cp "${SOURCE_DIR}/vendor_dlkm.img" "${DIST_DIR}/vendor_dlkm.img"
+
+    "${SOURCE_DIR}/prebuilts/make_flashable_zip.sh" \
+        "${flashable_zip}" \
+        "${package_dir}"
 }
 
 cleanup_packaging_workspace() {

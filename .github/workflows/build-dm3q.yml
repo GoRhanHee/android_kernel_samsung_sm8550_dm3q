@@ -73,6 +73,7 @@ jobs:
             uuid-dev \
             wget \
             xz-utils \
+            zip \
             zlib1g-dev \
             zstd
 
@@ -169,18 +170,24 @@ jobs:
               cp "${file}" "${artifact_dir}/dtbs/"
             done
 
-            declare -A final_images=(
+            declare -A required_artifacts=(
               [boot.img]="${dist}/boot.img"
               [vendor_boot.img]="${packaged}/vendor_boot.img"
               [vendor_dlkm.img]="${packaged}/vendor_dlkm.img"
+              [dm3q-kernel-recovery-flashable.zip]="${packaged}/dm3q-kernel-recovery-flashable.zip"
             )
-            for image in boot.img vendor_boot.img vendor_dlkm.img; do
-              source="${final_images[${image}]}"
+            for artifact in \
+              boot.img \
+              vendor_boot.img \
+              vendor_dlkm.img \
+              dm3q-kernel-recovery-flashable.zip
+            do
+              source="${required_artifacts[${artifact}]}"
               if [[ ! -f "${source}" ]]; then
-                echo "::error::Required final image not found: ${source}"
+                echo "::error::Required final artifact not found: ${source}"
                 exit 1
               fi
-              cp "${source}" "${artifact_dir}/${image}"
+              cp "${source}" "${artifact_dir}/${artifact}"
             done
           fi
 

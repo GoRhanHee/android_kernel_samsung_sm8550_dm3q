@@ -1,0 +1,171 @@
+#!/sbin/sh
+
+# Recovery-side installer for the dm3q kernel image bundle.
+# Arguments are supplied by TWRP/OrangeFox as:
+#   update-binary <api-version> <ui-fd> <zip-file>
+
+OUTFD="${2:-1}"
+ZIPFILE="${3:-}"
+SIZE_MANIFEST="META-INF/com/google/android/image-sizes"
+
+ui_print() {
+    if [ -e "/proc/self/fd/${OUTFD}" ]; then
+        echo "ui_print $*" > "/proc/self/fd/${OUTFD}"
+        echo "ui_print" > "/proc/self/fd/${OUTFD}"
+    else
+        echo "$*"
+    fi
+}
+
+abort() {
+    ui_print "ERROR: $*"
+    exit 1
+}
+
+get_property() {
+    if command -v getprop >/dev/null 2>&1; then
+        getprop "$1" 2>/dev/null
+    fi
+}
+
+check_device() {
+    product="$(get_property ro.product.device)"
+    vendor_product="$(get_property ro.product.vendor.device)"
+    build_product="$(get_property ro.build.product)"
+    model="$(get_property ro.product.model)"
+    identities="${product} ${vendor_product} ${build_product} ${model}"
+
+    case "${identities}" in
+        *dm3q*|*SM-S918*)
+            ui_print "Device: ${product:-dm3q}"
+            ;;
+        "   ")
+            ui_print "Device property unavailable; continuing in recovery."
+            ;;
+        *)
+            abort "This package is for dm3q, detected: ${identities}"
+            ;;
+    esac
+}
+
+resolve_partition() {
+    partition="$1"
+    slot_suffix="$2"
+
+    for candidate in \
+        "/dev/block/mapper/${partition}${slot_suffix}" \
+        "/dev/block/mapper/${partition}" \
+        "/dev/block/by-name/${partition}${slot_suffix}" \
+        "/dev/block/by-name/${partition}" \
+        "/dev/block/bootdevice/by-name/${partition}${slot_suffix}" \
+        "/dev/block/bootdevice/by-name/${partition}" \
+        /dev/block/platform/*/by-name/"${partition}${slot_suffix}" \
+        /dev/block/platform/*/by-name/"${partition}"
+    do
+        if [ -b "${candidate}" ]; then
+            echo "${candidate}"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+unmount_if_mounted() {
+    mount_point="$1"
+
+    if awk -v wanted="${mount_point}" \
+        '$2 == wanted { found = 1 } END { exit !found }' /proc/mounts
+    then
+        ui_print "Unmounting ${mount_point}"
+        umount "${mount_point}" ||
+            abort "Could not unmount ${mount_point}"
+    fi
+}
+
+image_size() {
+    image="$1"
+    unzip -p "${ZIPFILE}" "${SIZE_MANIFEST}" 2>/dev/null |
+        awk -v wanted="${image}" '$1 == wanted { print $2; exit }'
+}
+
+check_partition_size() {
+    image="$1"
+    target="$2"
+    required="$(image_size "${image}")"
+
+    case "${required}" in
+        ""|*[!0-9]*)
+            abort "Invalid size metadata for ${image}"
+            ;;
+    esac
+
+    if command -v blockdev >/dev/null 2>&1; then
+        available="$(blockdev --getsize64 "${target}" 2>/dev/null || true)"
+        case "${available}" in
+            ""|*[!0-9]*)
+                ui_print "Could not read ${target} size; continuing."
+                ;;
+            *)
+                if [ "${required}" -gt "${available}" ]; then
+                    abort "${image} (${required}) is larger than ${target} (${available})"
+                fi
+                ;;
+        esac
+    fi
+}
+
+flash_image() {
+    image="$1"
+    target="$2"
+
+    check_partition_size "${image}" "${target}"
+    ui_print "Flashing ${image} -> ${target}"
+    if ! unzip -p "${ZIPFILE}" "files/${image}" > "${target}"; then
+        abort "Failed to flash ${image}"
+    fi
+}
+
+[ -n "${ZIPFILE}" ] || abort "Recovery did not provide the ZIP path"
+[ -f "${ZIPFILE}" ] || abort "ZIP not found: ${ZIPFILE}"
+command -v unzip >/dev/null 2>&1 || abort "Recovery does not provide unzip"
+command -v awk >/dev/null 2>&1 || abort "Recovery does not provide awk"
+
+ui_print " "
+ui_print "Installing GoRhanHee kernel for Galaxy S23 Ultra (dm3q)"
+ui_print " "
+
+check_device
+
+ui_print "Checking package integrity..."
+unzip -t "${ZIPFILE}" >/dev/null 2>&1 || abort "ZIP integrity check failed"
+
+slot_suffix="$(get_property ro.boot.slot_suffix)"
+case "${slot_suffix}" in
+    ""|_a|_b)
+        ;;
+    *)
+        abort "Unexpected slot suffix: ${slot_suffix}"
+        ;;
+esac
+
+boot_block="$(resolve_partition boot "${slot_suffix}")" ||
+    abort "boot partition not found"
+vendor_boot_block="$(resolve_partition vendor_boot "${slot_suffix}")" ||
+    abort "vendor_boot partition not found"
+vendor_dlkm_block="$(resolve_partition vendor_dlkm "${slot_suffix}")" ||
+    abort "vendor_dlkm is not mapped; use a recovery with dynamic-partition support"
+
+unmount_if_mounted /vendor_dlkm
+unmount_if_mounted /mnt/vendor_dlkm
+
+flash_image boot.img "${boot_block}"
+flash_image vendor_boot.img "${vendor_boot_block}"
+flash_image vendor_dlkm.img "${vendor_dlkm_block}"
+
+sync
+ui_print " "
+ui_print "Installation complete."
+ui_print "Reboot to system when ready."
+ui_print " "
+exit 0
