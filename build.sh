@@ -209,6 +209,8 @@ run_privileged() {
 
 prepare_packaging_tools() {
     local prebuilts_dir="${SOURCE_DIR}/prebuilts"
+    local image_tools_dir="${prebuilts_dir}/vendor_dlkm_unpack"
+    local image_tools_commit="46a3c6a2b4413bc4570836ae0e3ab2d9de0c15e2"
 
     require_packaging_command git
     require_packaging_command wget
@@ -228,9 +230,14 @@ prepare_packaging_tools() {
     git clone --depth=1 \
         https://github.com/cfig/Android_boot_image_editor.git \
         "${prebuilts_dir}/vendor_boot_unpack"
-    git clone --depth=1 \
-        https://github.com/ravindu644/Android_Image_Tools.git \
-        "${prebuilts_dir}/vendor_dlkm_unpack"
+    git init -q "${image_tools_dir}"
+    git -C "${image_tools_dir}" remote add origin \
+        https://github.com/ravindu644/Android_Image_Tools.git
+    git -C "${image_tools_dir}" fetch --depth=1 origin \
+        "${image_tools_commit}"
+    git -C "${image_tools_dir}" checkout -q --detach FETCH_HEAD
+    git -C "${image_tools_dir}" apply \
+        "${prebuilts_dir}/patches/android-image-tools-wait-checksum.patch"
 }
 
 write_module_metadata() {

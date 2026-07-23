@@ -1,0 +1,16 @@
+diff --git a/.bin/unpack-erofs.sh b/.bin/unpack-erofs.sh
+index abd4b82..5536d82 100755
+--- a/.bin/unpack-erofs.sh
++++ b/.bin/unpack-erofs.sh
+@@ -551,5 +551,6 @@ echo -e "${BLUE}Calculating original file checksums...${RESET}"
+ (cd "$MOUNT_DIR" && find . -type f -exec sha256sum {} \;) > "${REPACK_INFO}/original_checksums.txt" &
++checksum_pid=$!
+ spinner=( '⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏' )
+ spin=0
+-while [ "$QUIET" = false ] && kill -0 $! 2>/dev/null; do
++while [ "$QUIET" = false ] && kill -0 "$checksum_pid" 2>/dev/null; do
+     # Clear entire line first
+@@ -558,2 +559,3 @@ while [ "$QUIET" = false ] && kill -0 $! 2>/dev/null; do
+ done
++wait "$checksum_pid"
+ 
