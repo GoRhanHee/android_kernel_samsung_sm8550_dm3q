@@ -331,14 +331,14 @@ unpack_vendor_dlkm() {
 }
 
 build_vendor_boot() {
-    SCRIPT_DIR="${SCRIPT_DIR}" \
+    env SCRIPT_DIR="${SCRIPT_DIR}" \
         DIST_DIR="${DIST_DIR}" \
         OUT_DIR="${OUT_DIR}" \
         "${SCRIPT_DIR}/prebuilts/build_vendor_boot.sh"
 }
 
 build_vendor_dlkm() {
-    SCRIPT_DIR="${SCRIPT_DIR}" \
+    env SCRIPT_DIR="${SCRIPT_DIR}" \
         DIST_DIR="${DIST_DIR}" \
         OUT_DIR="${OUT_DIR}" \
         "${SCRIPT_DIR}/prebuilts/build_vendor_dlkm.sh"
