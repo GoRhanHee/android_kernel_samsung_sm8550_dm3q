@@ -17,9 +17,9 @@ Build a ZIP from an image directory:
 `./build.sh full` calls the same packager automatically and writes
 `dm3q-kernel-recovery-flashable.zip` next to the packaged images.
 
-The installer is intended for an unlocked Galaxy S23 Ultra (`dm3q`) running
-TWRP, OrangeFox, or another recovery that maps Android dynamic partitions.
-It refuses to continue if `vendor_dlkm` is not exposed as a block device.
+The installer uses the same ARM64 Edify `update-binary` layout as the q5q
+package. It writes `boot`, `vendor_boot`, and the already-mapped dynamic
+`vendor_dlkm` partition directly from `updater-script`.
 
 Before flashing, keep a matching stock/custom set of `boot`, `vendor_boot`,
 and `vendor_dlkm` images available. Flashing a mismatched or corrupt image can

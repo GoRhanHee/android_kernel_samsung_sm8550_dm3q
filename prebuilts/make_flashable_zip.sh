@@ -52,8 +52,6 @@ main() {
     local archive
     local image
 
-    require_command sha256sum
-    require_command unzip
     require_command zip
 
     [[ -d "${TEMPLATE_DIR}/META-INF" ]] ||
@@ -83,31 +81,17 @@ main() {
             die "required image is missing or empty: ${image_dir}/${image}"
         cp "${image_dir}/${image}" "${stage_dir}/files/${image}"
         chmod 0644 "${stage_dir}/files/${image}"
-        printf '%s %s\n' \
-            "${image}" \
-            "$(wc -c < "${image_dir}/${image}")" \
-            >> "${stage_dir}/META-INF/com/google/android/image-sizes"
     done
 
     (
         cd "${stage_dir}"
-        sha256sum \
-            files/boot.img \
-            files/vendor_boot.img \
-            files/vendor_dlkm.img \
-            > SHA256SUMS
-        zip -0 -q -r "${output_name}" META-INF files SHA256SUMS
+        zip -0 -q -r "${output_name}" META-INF files
     )
 
     archive="${stage_dir}/${output_name}"
-    unzip -tq "${archive}" >/dev/null
     mv -f "${archive}" "${output_zip}"
 
     echo "Created ${output_zip}"
-    (
-        cd "${output_dir}"
-        sha256sum "$(basename "${output_zip}")"
-    )
 }
 
 main "$@"
