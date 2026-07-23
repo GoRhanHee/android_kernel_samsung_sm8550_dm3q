@@ -128,6 +128,10 @@ build_full() {
     export DIST_DIR="${OUT_DIR}/dist"
     export MERGE_CONFIG="${ANDROID_BUILD_TOP}/kernel_platform/common/scripts/kconfig/merge_config.sh"
 
+    if [[ -e "${OUT_DIR}/host/bin/ufdt_apply_overlay" ]]; then
+        chmod u+w "${OUT_DIR}/host/bin/ufdt_apply_overlay"
+    fi
+
     export KBUILD_EXTRA_SYMBOLS="${ANDROID_BUILD_TOP}/out/vendor/qcom/opensource/mmrm-driver/Module.symvers \
         ${ANDROID_BUILD_TOP}/out/vendor/qcom/opensource/mm-drivers/hw_fence/Module.symvers \
         ${ANDROID_BUILD_TOP}/out/vendor/qcom/opensource/mm-drivers/sync_fence/Module.symvers \
@@ -203,8 +207,10 @@ require_packaging_command() {
 run_privileged() {
     if (( EUID == 0 )); then
         "$@"
-    else
+    elif sudo -n true 2>/dev/null; then
         sudo "$@"
+    else
+        env AIT_ALLOW_ROOTLESS_FUSE=1 "$@"
     fi
 }
 
@@ -240,6 +246,8 @@ prepare_packaging_tools() {
     git -C "${image_tools_dir}" checkout -q --detach FETCH_HEAD
     git -C "${image_tools_dir}" apply \
         "${prebuilts_dir}/patches/android-image-tools-wait-checksum.patch"
+    git -C "${image_tools_dir}" apply \
+        "${prebuilts_dir}/patches/android-image-tools-rootless-fuse.patch"
 }
 
 write_module_metadata() {
@@ -322,7 +330,7 @@ unpack_vendor_dlkm() {
         run_privileged ./android_image_tools.sh \
             --conf="${config_file}" --quiet
     )
-    if (( EUID != 0 )); then
+    if (( EUID != 0 )) && sudo -n true 2>/dev/null; then
         sudo chown -R "$(id -u):$(id -g)" "${image_tools_dir}"
     fi
 

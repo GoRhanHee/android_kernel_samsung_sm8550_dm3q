@@ -18,6 +18,16 @@ OBJCOPY_TOOL="${REPO_ROOT}/kernel_platform/prebuilts/clang/host/linux-x86/clang-
 REPACK_CONFIG="${AIT_DIR}/CONFIGS/vendor_dlkm_repack.conf"
 REPACKED_IMAGE="${AIT_DIR}/REPACKED_IMAGES/vendor_dlkm_repacked.img"
 
+run_privileged() {
+    if (( EUID == 0 )); then
+        "$@"
+    elif sudo -n true 2>/dev/null; then
+        sudo "$@"
+    else
+        env AIT_ALLOW_ROOTLESS_FUSE=1 "$@"
+    fi
+}
+
 [[ -x "${PKG_VENDOR_DLKM}" ]] || chmod +x "${PKG_VENDOR_DLKM}"
 [[ -x "${OBJCOPY_TOOL}" ]] || { echo "llvm-objcopy not found: ${OBJCOPY_TOOL}" >&2; exit 1; }
 [[ -f "${VENDOR_DLKM_MODULES_LIST}" ]] || { echo "vendor_dlkm modules list not found: ${VENDOR_DLKM_MODULES_LIST}" >&2; exit 1; }
@@ -75,11 +85,8 @@ EOF
 
 (
     cd "${AIT_DIR}"
-    if (( EUID == 0 )); then
-        ./android_image_tools.sh --conf="${REPACK_CONFIG}" --quiet
-    else
-        sudo ./android_image_tools.sh --conf="${REPACK_CONFIG}" --quiet
-    fi
+    run_privileged ./android_image_tools.sh \
+        --conf="${REPACK_CONFIG}" --quiet
 )
 
 cp "${REPACKED_IMAGE}" "${REPO_ROOT}/vendor_dlkm.img"

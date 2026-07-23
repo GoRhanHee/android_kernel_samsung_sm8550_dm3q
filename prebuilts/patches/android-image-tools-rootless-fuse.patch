@@ -1,0 +1,45 @@
+diff --git a/android_image_tools.sh b/android_image_tools.sh
+index ca09786..a2bb8c8 100755
+--- a/android_image_tools.sh
++++ b/android_image_tools.sh
+@@ -38,5 +38,11 @@
+ sudo_cleanup_temp_dirs() {
+     if [ -d "$TMP_DIR" ]; then
+-        sudo rm -rf "$TMP_DIR"
++        if [ "$EUID" -eq 0 ]; then
++            rm -rf "$TMP_DIR"
++        elif sudo -n true 2>/dev/null; then
++            sudo rm -rf "$TMP_DIR"
++        else
++            rm -rf "$TMP_DIR"
++        fi
+     fi
+ }
+@@ -1431,4 +1437,4 @@
+ detect_os
+-if [ "$EUID" -ne 0 ]; then
++if [ "$EUID" -ne 0 ] && [ "${AIT_ALLOW_ROOTLESS_FUSE:-0}" != "1" ]; then
+     echo -e "${RED}This script requires root privileges. Please run with sudo.${RESET}"; exit 1
+ fi
+diff --git a/.bin/unpack-erofs.sh b/.bin/unpack-erofs.sh
+index ac245b5..25c4676 100755
+--- a/.bin/unpack-erofs.sh
++++ b/.bin/unpack-erofs.sh
+@@ -70,5 +70,5 @@
+ # Check if script is run as root
+-if [ "$EUID" -ne 0 ]; then
++if [ "$EUID" -ne 0 ] && [ "${AIT_ALLOW_ROOTLESS_FUSE:-0}" != "1" ]; then
+   echo -e "${RED}This script requires root privileges. Please run with sudo.${RESET}"
+   exit 1
+ fi
+diff --git a/.bin/repack-erofs.sh b/.bin/repack-erofs.sh
+index 203983c..fb0832c 100755
+--- a/.bin/repack-erofs.sh
++++ b/.bin/repack-erofs.sh
+@@ -67,5 +67,5 @@
+ # Check if script is run as root
+-if [ "$EUID" -ne 0 ]; then
++if [ "$EUID" -ne 0 ] && [ "${AIT_ALLOW_ROOTLESS_FUSE:-0}" != "1" ]; then
+   echo -e "${RED}This script requires root privileges. Please run with sudo.${RESET}"
+   exit 1
+ fi
